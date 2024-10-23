@@ -1,48 +1,93 @@
-Overview
-========
+# ETL Weather Data Pipeline using Apache Airflow
 
-Welcome to Astronomer! This project was generated after you ran 'astro dev init' using the Astronomer CLI. This readme describes the contents of the project, as well as how to run Apache Airflow on your local machine.
 
-Project Contents
-================
+## Overview
+This project demonstrates an ETL (Extract, Transform, Load) pipeline to fetch weather data from the Open-Meteo API, transform it, and load it into a PostgreSQL database using Apache Airflow. The goal is to showcase automated data workflows and gain hands-on experience with real-time data pipelines.
 
-Your Astro project contains the following files and folders:
+## Key Features
+**Extract**: Fetch weather data (temperature, wind speed, etc.) from Open-Meteo's API for a specific location.
 
-- dags: This folder contains the Python files for your Airflow DAGs. By default, this directory includes one example DAG:
-    - `example_astronauts`: This DAG shows a simple ETL pipeline example that queries the list of astronauts currently in space from the Open Notify API and prints a statement for each astronaut. The DAG uses the TaskFlow API to define tasks in Python, and dynamic task mapping to dynamically print a statement for each astronaut. For more on how this DAG works, see our [Getting started tutorial](https://www.astronomer.io/docs/learn/get-started-with-airflow).
-- Dockerfile: This file contains a versioned Astro Runtime Docker image that provides a differentiated Airflow experience. If you want to execute other commands or overrides at runtime, specify them here.
-- include: This folder contains any additional files that you want to include as part of your project. It is empty by default.
-- packages.txt: Install OS-level packages needed for your project by adding them to this file. It is empty by default.
-- requirements.txt: Install Python packages needed for your project by adding them to this file. It is empty by default.
-- plugins: Add custom or community plugins for your project to this file. It is empty by default.
-- airflow_settings.yaml: Use this local-only file to specify Airflow Connections, Variables, and Pools instead of entering them in the Airflow UI as you develop DAGs in this project.
+**Transform**: Structure the raw JSON response into meaningful fields for analysis.
 
-Deploy Your Project Locally
-===========================
+**Load**: Store the transformed data in a PostgreSQL database for further use.
 
-1. Start Airflow on your local machine by running 'astro dev start'.
+**Automation**: The entire ETL process is orchestrated and automated using Airflow.
 
-This command will spin up 4 Docker containers on your machine, each for a different Airflow component:
+## Project Architecture
+1. Airflow DAG: The pipeline consists of three tasks:
 
-- Postgres: Airflow's Metadata Database
-- Webserver: The Airflow component responsible for rendering the Airflow UI
-- Scheduler: The Airflow component responsible for monitoring and triggering tasks
-- Triggerer: The Airflow component responsible for triggering deferred tasks
+      * extract_weather_data: Calls the Open-Meteo API to fetch weather data.
+      * transform_weather_data: Extracts relevant data points and prepares them for storage.
+      * load_weather_data: Loads the transformed data into a PostgreSQL database.
 
-2. Verify that all 4 Docker containers were created by running 'docker ps'.
+2. Database:
+PostgreSQL database stores the weather data with the following fields:
 
-Note: Running 'astro dev start' will start your project with the Airflow Webserver exposed at port 8080 and Postgres exposed at port 5432. If you already have either of those ports allocated, you can either [stop your existing Docker containers or change the port](https://www.astronomer.io/docs/astro/cli/troubleshoot-locally#ports-are-not-available-for-my-local-airflow-webserver).
+      * latitude (FLOAT)
+      * longitude (FLOAT)
+      * temperature (FLOAT)
+      * windspeed (FLOAT)
+      * winddirection (FLOAT)
+      * weathercode (INT)
+      * timestamp (TIMESTAMP)
 
-3. Access the Airflow UI for your local Airflow project. To do so, go to http://localhost:8080/ and log in with 'admin' for both your Username and Password.
+## Technologies Used
 
-You should also be able to access your Postgres Database at 'localhost:5432/postgres'.
+    * Apache Airflow: Orchestrates the ETL workflow.
+    * PostgreSQL: Stores the transformed weather data.
+    * Open-Meteo API: Provides real-time weather data.
+    * Python: Handles data extraction, transformation, and loading.
 
-Deploy Your Project to Astronomer
-=================================
+## Setup and Installation
 
-If you have an Astronomer account, pushing code to a Deployment on Astronomer is simple. For deploying instructions, refer to Astronomer documentation: https://www.astronomer.io/docs/astro/deploy-code/
+### Prerequisites:
+  * Python 3.x
+  * Apache Airflow installed and configured
+  * PostgreSQL database (running and accessible)
+  * Airflow connections configured:
+  * PostgreSQL: postgres_default
+  * HTTP API: open_meteo_api
 
-Contact
-=======
+### Installation Steps:
+  
+1. Clone the Repository:
+  
+        gh repo clone raghava000/raghava.github.io
 
-The Astronomer CLI is maintained with love by the Astronomer team. To report a bug or suggest a change, reach out to our support.
+2. Set up Airflow and PostgreSQL:
+
+  * Ensure Airflow is installed and running.
+  * Create a PostgreSQL connection in Airflow with the ID postgres_default.
+  * Add an HTTP connection in Airflow for the Open-Meteo API with ID open_meteo_api.
+
+3. Trigger the DAG:
+
+  * Access the Airflow UI at http://localhost:8080.
+  * Enable and manually trigger the weather_etl_pipeline DAG.
+
+
+### Usage and Execution Flow
+  1. The DAG fetches weather data from the API.
+  2. Transforms the JSON data to extract key weather metrics.
+  3. Loads the cleaned data into the PostgreSQL table weather_data.
+
+### Troubleshooting
+  * Connection Refused Error: Ensure PostgreSQL is running and accepting connections on the correct port.
+  * Airflow Webserver Issues: If Airflow is already running on a different port, use:
+
+          sudo lsof -i :8080  # Find the process ID (PID)
+          sudo kill -15 <PID>  # Stop the process running on that port
+
+
+### Project Output
+
+Sample data entry in the PostgreSQL table:
+
+Latitude	Longitude	Temperature	Windspeed	 Wind Direction	 Weather Code	     Timestamp
+
+51.5074	  -0.1278	   15.2°C	    10.5 km/h	     230°	            2	       2024-10-23 04:56:42
+
+### Future Improvements
+  * Add visualization dashboards with tools like Power BI or Tableau.
+  * Extend the ETL to process historical weather data.
+  * Automate alerts for extreme weather events.
